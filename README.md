@@ -4,7 +4,7 @@
 
 This project was meant for Windows to replace some old legacy software we were using to accomplish these tasks, most of these functions are native to Linux without the need for this tool.
 
-**Note:** The printing of PDFs is handled by GhostScript. You will need to source the binaries from them and place them alongside your Nexus.exe.
+**Note:** The printing of PDFs is handled by GhostScript. You will need to source the binaries from them and place them alongside your Nexus.exe for the PrintPDF function to work.
 
 GhostScript can be found at: [https://www.ghostscript.com/releases/gsdnld.html](https://www.ghostscript.com/releases/gsdnld.html)
 
@@ -25,6 +25,9 @@ GhostScript can be found at: [https://www.ghostscript.com/releases/gsdnld.html](
 
 4. **Build the project**
 ```dotnet build```
+
+5. **Publish the project**
+```dotnet publish -c Release -r win-x64 --self-contained```
 
 
 # Features
