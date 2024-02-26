@@ -12,19 +12,19 @@ GhostScript can be found at: [https://www.ghostscript.com/releases/gsdnld.html](
 # Build Instructions
 
 1. **Clone the Repository**
-git clone https://github.com/zzpixels/Nexus
+```git clone https://github.com/zzpixels/Nexus```
 
 
 2. **Change to project directory**
-cd Nexus
+```cd Nexus```
 
 
 3. **Restore NuGet Packages**
-dotnet restore
+```dotnet restore```
 
 
 4. **Build the project**
-dotnet build
+```dotnet build```
 
 
 # Features
@@ -45,7 +45,7 @@ dotnet build
 1. **Convert TIF to PDF** - Converts a TIF file into a PDF document.
 
 Command:
-Nexus.exe -convert <TIF_FILE_PATH> <PDF_OUTPUT_PATH>
+```Nexus.exe -convert <TIF_FILE_PATH> <PDF_OUTPUT_PATH>```
 
 - `<TIF_FILE_PATH>`: Path of the TIF file to convert.
 - `<PDF_OUTPUT_PATH>`: Path where the converted PDF will be saved.
@@ -54,7 +54,7 @@ Nexus.exe -convert <TIF_FILE_PATH> <PDF_OUTPUT_PATH>
 2. **Print PDF** - Send a PDF file to a specified printer.
 
 Command:
-Nexus.exe -printpdf <PDF_FILE_PATH> <PRINTER_NAME>
+```Nexus.exe -printpdf <PDF_FILE_PATH> <PRINTER_NAME>```
 
 - `<PDF_FILE_PATH>`: Path of the PDF file to print.
 - `<PRINTER_NAME>`: Name of the printer.
@@ -63,7 +63,7 @@ Nexus.exe -printpdf <PDF_FILE_PATH> <PRINTER_NAME>
 3. **Combine TIF Files** - Merges multiple TIF files into a single multi-page TIF file.
 
 Command:
-Nexus.exe -combinetif <TIF1> <TIF2> <TIF3> <OUTPUT_TIF>
+```Nexus.exe -combinetif <TIF1> <TIF2> <TIF3> <OUTPUT_TIF>```
 
 - `<TIF1> <TIF2> <TIF3> Continued...`: Paths of the TIF files to combine. (Can handle as many inputs as you feed it)
 - `<OUTPUT_TIF>`: Path where the combined TIF file will be saved.
@@ -71,7 +71,7 @@ Nexus.exe -combinetif <TIF1> <TIF2> <TIF3> <OUTPUT_TIF>
 4. **Combine PDF Files** - Combines multiple PDF files into one multi-page PDF document.
 
 Command:
-Nexus.exe -combinepdf <PDF1> <PDF2> <PDF3> <OUTPUT_PDF>
+```Nexus.exe -combinepdf <PDF1> <PDF2> <PDF3> <OUTPUT_PDF>```
 
 - `<PDF1> <PDF2> <PDF3> Continued...`: Paths of the PDF files to combine. (Can handle as many inputs as you feed it)
 - `<OUTPUT_PDF>`: Path where the combined PDF will be saved.
