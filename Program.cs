@@ -54,7 +54,7 @@ namespace Nexus
                     CombineTifs(args[1..^1], args[^1]);
                     break;
                 case "-combinepdf":
-                    if (args.Length < 3)
+                    if (args.Length < s3)
                     {
                         Console.WriteLine("Usage: -combinepdf <pdf1> <pdf2> ... <output-pdf>");
                         return;
@@ -109,109 +109,6 @@ namespace Nexus
             }
             Console.WriteLine($"Converted {tifFilePath} to {pdfFilePath}");
         }
-
-
-
-
-
-        private static void PrintPDF2(string pdfFilePath, string printerName)
-        {
-            using (var pdfiumDocument = PdfiumViewer.PdfDocument.Load(pdfFilePath))
-            {
-                using (var printDocument = new System.Drawing.Printing.PrintDocument())
-                {
-                    printDocument.PrinterSettings.PrinterName = printerName;
-                    printDocument.PrintController = new StandardPrintController();
-
-                    int pageIndex = 0;
-
-                    printDocument.PrintPage += (sender, e) =>
-                    {
-                        if (pageIndex < pdfiumDocument.PageCount)
-                        {
-                            // Calculate the scaling factor (slightly reduced)
-                            float scaleX = (float)(e.PageBounds.Width - 30) / pdfiumDocument.PageSizes[pageIndex].Width;
-                            float scaleY = (float)(e.PageBounds.Height - 30) / pdfiumDocument.PageSizes[pageIndex].Height;
-                            float scaleFactor = Math.Min(scaleX, scaleY);
-
-                            // Determine the size of the rendered image
-                            int imageWidth = (int)(pdfiumDocument.PageSizes[pageIndex].Width * scaleFactor);
-                            int imageHeight = (int)(pdfiumDocument.PageSizes[pageIndex].Height * scaleFactor);
-                            using (var pageImage = pdfiumDocument.Render(pageIndex, imageWidth, imageHeight, 300, 300, PdfRenderFlags.ForPrinting)) // Increased DPI and ForPrinting flag
-                            {
-                                e.Graphics.DrawImage(pageImage, new System.Drawing.Rectangle((e.PageBounds.Width - imageWidth) / 2, (e.PageBounds.Height - imageHeight) / 2, imageWidth, imageHeight));
-                            }
-                            e.HasMorePages = ++pageIndex < pdfiumDocument.PageCount;
-                        }
-                    };
-
-                    printDocument.Print();
-                }
-            }
-            Console.WriteLine("Print job sent successfully.");
-        }
-
-        private static void PrintPDF(string pdfFilePath, string printerName)
-        {
-            using (var pdfiumDocument = PdfiumViewer.PdfDocument.Load(pdfFilePath))
-            {
-                using (var printDocument = new PrintDocument())
-                {
-                    printDocument.PrinterSettings.PrinterName = printerName;
-                    printDocument.PrintController = new StandardPrintController();
-
-                    int pageIndex = 0;
-
-                    printDocument.PrintPage += (sender, e) =>
-                    {
-                        if (pageIndex < pdfiumDocument.PageCount)
-                        {
-                            // Reduce the margins to increase the scale of the printed image
-                            // Example: Decreasing margins by 20 units on each side
-                            var reducedMargin = 0;
-                            var printableArea = e.MarginBounds;
-                            printableArea.Inflate(-reducedMargin, -reducedMargin);
-
-                            // Calculate the aspect ratio of the PDF page
-                            double pdfAspectRatio = pdfiumDocument.PageSizes[pageIndex].Width / pdfiumDocument.PageSizes[pageIndex].Height;
-
-                            // Calculate the scaling factor based on aspect ratio
-                            double scale;
-                            if (printableArea.Width / printableArea.Height > pdfAspectRatio)
-                            {
-                                // Fit to height
-                                scale = printableArea.Height / pdfiumDocument.PageSizes[pageIndex].Height;
-                            }
-                            else
-                            {
-                                // Fit to width
-                                scale = printableArea.Width / pdfiumDocument.PageSizes[pageIndex].Width;
-                            }
-
-                            // Calculate the size of the rendered image
-                            int imageWidth = (int)(pdfiumDocument.PageSizes[pageIndex].Width * scale);
-                            int imageHeight = (int)(pdfiumDocument.PageSizes[pageIndex].Height * scale);
-
-                            // Render the page at the calculated size
-                            using (var pageImage = pdfiumDocument.Render(pageIndex, imageWidth, imageHeight, 300, 300, PdfRenderFlags.ForPrinting))
-                            {
-                                // Center the image on the page
-                                int x = printableArea.Left + (printableArea.Width - imageWidth) / 2;
-                                int y = printableArea.Top + (printableArea.Height - imageHeight) / 2;
-
-                                e.Graphics.DrawImage(pageImage, new System.Drawing.Rectangle(x, y, imageWidth, imageHeight));
-                            }
-
-                            e.HasMorePages = ++pageIndex < pdfiumDocument.PageCount;
-                        }
-                    };
-
-                    printDocument.Print();
-                }
-            }
-            Console.WriteLine("Print job sent successfully.");
-        }
-
 
         private static void GhostPrintPDF(string pdfFilePath, string printerName)
         {
