@@ -10,79 +10,96 @@ using iTextSharp.text;
 using iTextSharp.text.pdf;
 using Image = iTextSharp.text.Image;
 using System.Drawing;
-using System.Drawing.Printing;
-
+using PdfSharp.Pdf;
+using PdfSharp.Pdf.IO;
 
 namespace Nexus
 {
     class Program
     {
+        static string LogFile = "nexus.log";
+
         static void Main(string[] args)
         {
             if (args.Length < 2)
             {
-                ShowUsage();
+                Log("Invalid arguments provided. Expected at least 2.");
                 return;
             }
 
             string operation = args[0].ToLower();
 
-            switch (operation)
+            try
             {
-                case "-convert":
-                    if (args.Length != 3)
-                    {
-                        Console.WriteLine("Usage: -convert <tif-file-path> <pdf-output-path>");
-                        return;
-                    }
-                    ConvertTifToPdf(args[1], args[2]);
-                    break;
-                case "-printpdf":
-                    if (args.Length != 3)
-                    {
-                        Console.WriteLine("Usage: -ghostprintpdf <pdf-file-path> <printer-name>");
-                        return;
-                    }
-                    GhostPrintPDF(args[1], args[2]);
-                    break;
-                case "-combinetif":
-                    if (args.Length < 3)
-                    {
-                        Console.WriteLine("Usage: -combinetif <file1> <file2> ... <output-file-path>");
-                        return;
-                    }
-                    CombineTifs(args[1..^1], args[^1]);
-                    break;
-                case "-combinepdf":
-                    if (args.Length < s3)
-                    {
-                        Console.WriteLine("Usage: -combinepdf <pdf1> <pdf2> ... <output-pdf>");
-                        return;
-                    }
-                    CombinePDFs(args[1..^1], args[^1]);
-                    break;
-                default:
-                    ShowUsage();
-                    break;
+                switch (operation)
+                {
+                    case "-convert":
+                        if (args.Length != 3)
+                        {
+                            Log("Usage: -convert <tif-file-path> <pdf-output-path>");
+                            return;
+                        }
+                        ConvertTifToPdf(args[1], args[2]);
+                        break;
+
+                    case "-printpdf":
+                        if (args.Length != 3)
+                        {
+                            Log("Usage: -printpdf <pdf-file-path> <printer-name>");
+                            return;
+                        }
+                        GhostPrintPDF(args[1], args[2]);
+                        break;
+
+                    case "-combinetif":
+                        if (args.Length < 3)
+                        {
+                            Log("Usage: -combinetif <file1> <file2> ... <output-file-path>");
+                            return;
+                        }
+                        CombineTifs(args[1..^1], args[^1]);
+                        break;
+
+                    case "-combinepdf":
+                        if (args.Length < 3)
+                        {
+                            Log("Usage: -combinepdf <pdf1> <pdf2> ... <output-pdf>");
+                            return;
+                        }
+                        CombinePDFs(args[1..^1], args[^1]);
+                        break;
+
+                    default:
+                        Log("Unknown operation: " + operation);
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                Log("Unhandled exception in Main: " + ex.Message);
             }
         }
 
-        private static void ShowUsage()
+        private static void Log(string message)
         {
-            Console.WriteLine("Usage:");
-            Console.WriteLine("  Convert TIF to PDF: -convert <tif-file-path> <pdf-output-path>");
-            Console.WriteLine("  Print PDF: -printpdf <pdf-file-path> <printer-name>");
-            Console.WriteLine("  Combine Tifs: -combinetif <file1> <file2> ... <output-file-path>");
-            Console.WriteLine("  Combine PDFs: -combinepdf <file1> <file2> ... <output-file-path>");
+            try
+            {
+                File.AppendAllText(LogFile, $"[{DateTime.UtcNow:u}] {message}{Environment.NewLine}");
+            }
+            catch
+            {
+
+            }
         }
 
         private static void ConvertTifToPdf(string tifFilePath, string pdfFilePath)
         {
-            using (var images = new MagickImageCollection())
+            try
             {
-                images.Read(tifFilePath);
-                using (var stream = new FileStream(pdfFilePath, FileMode.Create, FileAccess.Write, FileShare.None))
+                using (var images = new MagickImageCollection())
                 {
+                    images.Read(tifFilePath);
+                    using (var stream = new FileStream(pdfFilePath, FileMode.Create, FileAccess.Write, FileShare.None))
                     using (var document = new Document())
                     {
                         PdfWriter.GetInstance(document, stream);
@@ -106,80 +123,94 @@ namespace Nexus
                         document.Close();
                     }
                 }
+
+                Log($"Success: Converted {tifFilePath} to {pdfFilePath}");
             }
-            Console.WriteLine($"Converted {tifFilePath} to {pdfFilePath}");
+            catch (Exception ex)
+            {
+                Log($"Failed to convert {tifFilePath} to {pdfFilePath}. Error: {ex.Message}");
+            }
         }
 
         private static void GhostPrintPDF(string pdfFilePath, string printerName)
         {
-            // Path to Ghostscript executable
-            string ghostscriptExe = "gswin64c.exe"; // Update with the correct Ghostscript executable name
-
-            // Ghostscript command to print PDF
-            string command = $"-sDEVICE=mswinpr2 -dBATCH -dNOPAUSE -dNOSAFER -sPAPERSIZE=letter -r300 -dPDFFitPage -sOutputFile=\"%printer%{printerName}\" \"{pdfFilePath}\"";
-
-            // Create process start info
-            ProcessStartInfo psi = new ProcessStartInfo
+            try
             {
-                FileName = ghostscriptExe,
-                Arguments = command,
-                RedirectStandardError = true,
-                RedirectStandardOutput = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
+                string ghostscriptExe = "gswin64c.exe";
+                string command = $"-sDEVICE=mswinpr2 -dBATCH -dNOPAUSE -dNOSAFER -sPAPERSIZE=letter -r300 -dPDFFitPage -sOutputFile=\"%printer%{printerName}\" \"{pdfFilePath}\"";
 
-            // Start the Ghostscript process
-            using (Process process = new Process())
+                var psi = new ProcessStartInfo
+                {
+                    FileName = ghostscriptExe,
+                    Arguments = command,
+                    RedirectStandardError = true,
+                    RedirectStandardOutput = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+
+                using (var process = new Process { StartInfo = psi })
+                {
+                    process.Start();
+                    process.WaitForExit();
+
+                    Log($"Success: Sent {pdfFilePath} to printer {printerName}");
+                }
+            }
+            catch (Exception ex)
             {
-                process.StartInfo = psi;
-                process.Start();
-
-                // Wait for the process to exit
-                process.WaitForExit();
-
-                Console.WriteLine("Print job sent successfully.");
+                Log($"Failed to print {pdfFilePath} on {printerName}. Error: {ex.Message}");
             }
         }
 
-
         private static void CombineTifs(string[] filePaths, string outputFilePath)
         {
-            using (var images = new MagickImageCollection())
+            try
             {
-                foreach (var filePath in filePaths)
+                using (var images = new MagickImageCollection())
                 {
-                    images.Add(new MagickImage(filePath));
+                    foreach (var filePath in filePaths)
+                    {
+                        images.Add(new MagickImage(filePath));
+                    }
+
+                    images.Write(outputFilePath);
                 }
 
-                images.Write(outputFilePath);
+                Log($"Success: Combined TIFFs into {outputFilePath}. Source files: {string.Join(", ", filePaths)}");
             }
-            Console.WriteLine($"Combined Tifs into {outputFilePath}");
+            catch (Exception ex)
+            {
+                Log($"Failed to combine TIFFs to {outputFilePath}. Source files: {string.Join(", ", filePaths)}. Error: {ex.Message}");
+            }
         }
 
         private static void CombinePDFs(string[] pdfFilePaths, string outputFilePath)
         {
-            using (var outputPdf = new PdfSharp.Pdf.PdfDocument())
+            try
             {
-                foreach (var pdfFilePath in pdfFilePaths)
+                using (var outputPdf = new PdfSharp.Pdf.PdfDocument())
                 {
-                    using (var inputPdf = PdfSharp.Pdf.IO.PdfReader.Open(pdfFilePath, PdfSharp.Pdf.IO.PdfDocumentOpenMode.Import))
+                    foreach (var pdfFilePath in pdfFilePaths)
                     {
-                        foreach (PdfSharp.Pdf.PdfPage page in inputPdf.Pages)
+                        using (var inputPdf = PdfSharp.Pdf.IO.PdfReader.Open(pdfFilePath, PdfSharp.Pdf.IO.PdfDocumentOpenMode.Import))
                         {
-                            outputPdf.AddPage(page);
+                            foreach (PdfSharp.Pdf.PdfPage page in inputPdf.Pages)
+                            {
+                                outputPdf.AddPage(page);
+                            }
                         }
                     }
+
+                    outputPdf.Save(outputFilePath);
                 }
 
-                outputPdf.Save(outputFilePath);
+                Log($"Success: Combined PDFs into {outputFilePath}. Source files: {string.Join(", ", pdfFilePaths)}");
             }
-            Console.WriteLine($"Combined PDFs into {outputFilePath}");
+            catch (Exception ex)
+            {
+                Log($"Failed to combine PDFs to {outputFilePath}. Source files: {string.Join(", ", pdfFilePaths)}. Error: {ex.Message}");
+            }
         }
-
-
-
-
     }
 }
-
